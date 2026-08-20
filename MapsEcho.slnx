@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="MapsEcho.vcxproj" Id="5c535852-45df-44a5-b539-750d6cf0f8bf" />
+</Solution>
