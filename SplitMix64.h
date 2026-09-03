@@ -1,6 +1,9 @@
 #pragma once
 
 class Splitmix64 {
+private:
+	uint64_t state;
+	const double twoPower64 = pow(2.0, 64);
 public:
 	Splitmix64();
 	Splitmix64(const uint64_t seed);
@@ -8,8 +11,4 @@ public:
 	void seed(const uint64_t seed);
 	uint64_t next_int();
 	double next_float();
-
-private:
-	uint64_t state;
-	const double twoPower64 = pow(2.0, 64);
-}
+};

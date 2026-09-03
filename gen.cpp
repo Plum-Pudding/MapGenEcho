@@ -1,13 +1,13 @@
-#include "gen.h"
-#include "map.h"
-#include "SplitMix64.h"
+
 #include <iostream>
 #include <chrono>
 #include <fstream>
-#include <random>
+
+#include "gen.h"
+#include "map.h"
+#include "SplitMix64.h"
 
 namespace Gen {
-
     void fillBlanketGridMap(Map& map, int16_t target) {
         auto fillGridMap_Start = std::chrono::high_resolution_clock::now();
         for (int x = 0; x < map.getSizeX(); x++) {
@@ -88,12 +88,11 @@ namespace Gen {
 
     }
 
-    void mapSnake4Directions(Map& map, int32_t startX = 0, int32_t startY = 0, int32_t stepCount = 1, int16_t targetChange = 1, uint64_t seed = 0) {
+    void mapSnake4Directions(Map& map, int32_t startX, int32_t startY, int32_t stepCount, int16_t targetChange, uint64_t seed) {
         //Does a snake game thing idk along 4 directions, maybe we can use this to draw plate borders
 
         //Set up quick rng
-        Splitmix64 random;
-        random.seed(seed);
+        Splitmix64 random(seed);
 
         int32_t currentX = startX;
         int32_t currentY = startY;
@@ -107,9 +106,9 @@ namespace Gen {
 
         //Main loop
         while (headIsStuck == false) {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 10 && stepCount > 0; i++) {
                 //pick a random direction (N,S,E,W)
-                switch (random.next_int() % 4) {
+                switch (random.next_int() & 3) {
                 case 0:
                     //N
                     nextY++;
@@ -122,6 +121,9 @@ namespace Gen {
                 case 3:
                     //W
                     nextX--;
+                default: 
+                    //default to north
+                    nextY++;
                 }
 
                 //check if cell value is already the same
@@ -139,6 +141,7 @@ namespace Gen {
                     nextY = currentY;
 
                 }
+                stepCount--;
             }
             //If the random attempts fail 10 times in a row then check if the head is stuck 
             headIsStuck = checkIfSurrounded4D(map, currentX, currentY);
@@ -147,12 +150,11 @@ namespace Gen {
 
     }
 
-    void mapSnake8Directions(Map& map, int32_t startX = 0, int32_t startY = 0, int32_t stepCount = 1, int16_t targetChange = 1, uint64_t seed = 0) {
+    void mapSnake8Directions(Map& map, int32_t startX, int32_t startY, int32_t stepCount, int16_t targetChange, uint64_t seed) {
         //Does a snake game thing idk along 8 directions, maybe we can use this to draw plate borders
 
         //Set up quick rng
-        Splitmix64 random;
-        random.seed(seed);
+        Splitmix64 random(seed);
 
         int32_t currentX = startX;
         int32_t currentY = startY;
@@ -166,7 +168,7 @@ namespace Gen {
 
         //Main loop
         while (headIsStuck == false) {
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < 16 && stepCount > 0; i++) {
                 //pick a random direction (N,S,E,W)
                 switch (random.next_int() & 0b111) {
                 case 0:
@@ -197,6 +199,9 @@ namespace Gen {
                     //SW
                     nextY--;
                     nextX--;
+                default:
+                    //Default to north
+                    nextY++;
                 }
 
                 //check if cell value is already the same
@@ -214,6 +219,7 @@ namespace Gen {
                     nextY = currentY;
 
                 }
+                stepCount--;
             }
             //If the random attempts fail 10 times in a row then check if the head is stuck 
             headIsStuck = checkIfSurrounded8D(map, currentX, currentY);

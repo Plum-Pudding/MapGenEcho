@@ -1,9 +1,8 @@
-#include "SplitMix64.h"
-
 #include <iostream>
 #include <cmath>
 #include <vector>
 
+#include "SplitMix64.h"
 
 Splitmix64::Splitmix64() { state = 0; };
 Splitmix64::Splitmix64(const uint64_t seed) : state(seed) {};
