@@ -2,27 +2,32 @@
 
 class Map{
 public:
-    Map(int size_x, int size_y);
+    Map(int32_t size_x, int32_t size_y);
 
-    int getSizeX() const;
+    int32_t getSizeX() const;
 
-    int getSizeY() const;
+    int32_t getSizeY() const;
 
-    int index(int x, int y) const;
+    int32_t index(int32_t x, int32_t y) const;
 
-    __int16& heightAt(int x, int y);
+    int16_t& heightAt(int32_t x, int32_t y);
 
-    __int16& precipitationAt(int x, int y);
+    int16_t& precipitationAt(int32_t x, int32_t y);
 
-    const __int16& heightAt(int x, int y) const;
+    int16_t& tempValueAt(int32_t x, int32_t);
 
-    const __int16& precipitationAt(int x, int y) const;
+    const int16_t& heightAt(int32_t x, int32_t y) const;
+
+    const int16_t& precipitationAt(int32_t x, int32_t y) const;
+
+    const int16_t& tempValueAt(int32_t x, int32_t y) const;
 
 private:
-    int size_x, size_y;
+    int32_t size_x, size_y;
 
-    std::vector<__int16> tectonicDirection;
-    std::vector<__int16> height;
-    std::vector<__int16> precipitation;
+    std::vector<int16_t> tectonicDirection;
+    std::vector<int16_t> height;
+    std::vector<int16_t> precipitation;
+    std::vector<int16_t> tempValue;
 };
 

@@ -141,11 +141,15 @@
   <ItemGroup>
     <ClCompile Include="map.cpp" />
     <ClCompile Include="MapsEcho.cpp" />
+    <ClCompile Include="gen.cpp" />
+    <ClCompile Include="SplitMix64.cpp" />
+    <ClCompile Include="util.h" />
     <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="map.h" />
-    <ClInclude Include="util.h" />
+    <ClInclude Include="gen.h" />
+    <ClInclude Include="SplitMix64.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
