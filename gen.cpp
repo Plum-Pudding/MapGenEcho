@@ -112,27 +112,33 @@ namespace Gen {
                 case 0:
                     //N
                     nextY++;
+                    break;
                 case 1:
                     //S
                     nextY--;
+                    break;
                 case 2:
                     //E
                     nextX++;
+                    break;
                 case 3:
                     //W
                     nextX--;
+                    break;
                 default: 
                     //default to north
                     nextY++;
+                    break;
                 }
 
                 //check if cell value is already the same
                 //If not, change the current coords to new cell and fill 
                 //If yes, pick another direction
-                if (map.tempValueAt(nextX, nextY) != targetChange) {
+                std::cout << map.heightAt(nextX, nextY);
+                if (map.heightAt(nextX, nextY) != targetChange) {
                     currentX = nextX;
                     currentY = nextY;
-                    map.tempValueAt(currentX, currentY) = targetChange;
+                    map.heightAt(currentX, currentY) = targetChange;
                     i = 0;
                 }
                 else {
@@ -153,6 +159,9 @@ namespace Gen {
     void mapSnake8Directions(Map& map, int32_t startX, int32_t startY, int32_t stepCount, int16_t targetChange, uint64_t seed) {
         //Does a snake game thing idk along 8 directions, maybe we can use this to draw plate borders
 
+        //So it actually does n number of steps
+        stepCount++;
+
         //Set up quick rng
         Splitmix64 random(seed);
 
@@ -167,50 +176,60 @@ namespace Gen {
         map.heightAt(currentX, currentY) = targetChange;
 
         //Main loop
-        while (headIsStuck == false) {
+        while (headIsStuck == false && stepCount > 0) {
             for (int i = 0; i < 16 && stepCount > 0; i++) {
                 //pick a random direction (N,S,E,W)
-                switch (random.next_int() & 0b111) {
+                int64_t rand_num = random.next_int() & 0b111;
+                switch (rand_num) {
                 case 0:
                     //N
                     nextY++;
+                    break;
                 case 1:
                     //S
                     nextY--;
+                    break;
                 case 2:
                     //E
                     nextX++;
+                    break;
                 case 3:
                     //W
                     nextX--;
+                    break;
                 case 4:
                     //NE
                     nextY++;
                     nextX++;
+                    break;
                 case 5:
                     //NW
                     nextY++;
                     nextX--;
+                    break;
                 case 6:
                     //SE
                     nextY--;
                     nextX++;
+                    break;
                 case 7:
                     //SW
                     nextY--;
                     nextX--;
+                    break;
                 default:
                     //Default to north
                     nextY++;
+                    break;
                 }
 
                 //check if cell value is already the same
                 //If not, change the current coords to new cell and fill 
                 //If yes, pick another direction
-                if (map.tempValueAt(nextX, nextY) != targetChange) {
+                if (map.heightAt(nextX, nextY) != targetChange) {
                     currentX = nextX;
                     currentY = nextY;
-                    map.tempValueAt(currentX, currentY) = targetChange;
+                    map.heightAt(currentX, currentY) = targetChange;
                     i = 0;
                 }
                 else {
@@ -227,21 +246,125 @@ namespace Gen {
         //If we escape this loop it means the head has hit a dead end or is stuck
     }
 
+    void mapSnake8DirectionsAdditive(Map& map, int32_t startX, int32_t startY, int32_t stepCount, int16_t targetAddChange, uint64_t seed) {
+        auto startTime = std::chrono::high_resolution_clock::now();
+        //Does a snake game thing idk along 8 directions, maybe we can use this to draw plate borders
+
+        int32_t mapSizeX = map.getSizeX();
+        int32_t mapSizeY = map.getSizeY();
+
+        //So it actually does n number of steps
+        stepCount++;
+
+        //Set up quick rng
+        Splitmix64 random(seed);
+
+        int32_t currentX = startX;
+        int32_t currentY = startY;
+        int32_t nextX = startX;
+        int32_t nextY = startY;
+
+        //Add to the starting cell
+        map.heightAt(currentX, currentY) = map.heightAt(currentX, currentY) + targetAddChange;
+
+        //Main loop
+        for (int i = stepCount; i > 0; i--) {
+            //pick a random direction (N,S,E,W)
+            int64_t rand_num = random.next_int() & 0b111;
+            switch (rand_num) {
+            case 0:
+                //N
+                nextY++;
+                break;
+            case 1:
+                //S
+                nextY--;
+                break;
+            case 2:
+                //E
+                nextX++;
+                break;
+            case 3:
+                //W
+                nextX--;
+                break;
+            case 4:
+                //NE
+                nextY++;
+                nextX++;
+                break;
+            case 5:
+                //NW
+                nextY++;
+                nextX--;
+                break;
+            case 6:
+                //SE
+                nextY--;
+                nextX++;
+                break;
+            case 7:
+                //SW
+                nextY--;
+                nextX--;
+                break;
+            default:
+                //Default to north
+                nextY++;
+                break;
+            }
+
+            //todo: add check to ensure thing does not go out of bounds
+            //if out of bounds, rerun the random direction
+            //todo: How to make sure we aren't adding extra steps if both X and Y are out of bounds
+            //todo: Check the performance cost of adding another layer of if checks
+            if (nextX < 0 || nextY < 0 || nextX > mapSizeX || nextY > mapSizeY) { //Max 4 clock cycles(?)
+                if (nextX < 0) { //+1 cycle
+                    nextX++; //+1 cycle
+                }
+                if (nextY < 0) { //+1 cycle
+                    nextY++; //+1 cycle
+                }
+                if (nextX > mapSizeX) { //+1 cycle
+                    nextX--; //+1 cycle
+                }
+                if (nextY > mapSizeY) { //+1 cycle
+                    nextY--; //+1 cycle
+                }
+                i++; //+1 cycle
+                continue; //? cycles
+            }
+            
+            /*
+            currentX = nextX;
+            currentY = nextY;
+
+            map.heightAt(currentX, currentY) = map.heightAt(currentX, currentY) + targetAddChange;
+            */
+
+            map.heightAt(nextX, nextY) = map.heightAt(nextX, nextY) + targetAddChange;
+
+        }
+        auto endTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration <double, std::milli> executionDuration = endTime - startTime;
+        std::cout << "Executed " << (stepCount - 1) << " steps in " << executionDuration << "\n";
+    }
+
     char8_t checkIfSurrounded4D(Map& map, int32_t startX, int32_t startY) {
-        int16_t currentValue = map.tempValueAt(startX, startY);
+        int16_t currentValue = map.heightAt(startX, startY);
         bool isSurrounded = false;
 
         //Check cardinal 4 directions NSEW
         //North
-        if (map.tempValueAt(startX, startY + 1) != currentValue) {
+        if (map.heightAt(startX, startY + 1) != currentValue) {
             return isSurrounded;
         }
         //South
-        else if (map.tempValueAt(startX, startY - 1) != currentValue) {
+        else if (map.heightAt(startX, startY - 1) != currentValue) {
             return isSurrounded;
         }
         //East 
-        else if (map.tempValueAt(startX + 1, startY) != currentValue) {
+        else if (map.heightAt(startX + 1, startY) != currentValue) {
             return isSurrounded;
         }
         //West
@@ -252,36 +375,36 @@ namespace Gen {
     }
 
     char8_t checkIfSurrounded8D(Map& map, int32_t startX, int32_t startY) {
-        int16_t currentValue = map.tempValueAt(startX, startY);
+        int16_t currentValue = map.heightAt(startX, startY);
         bool isSurrounded = false;
 
         //Check 8 directions NSEW and NE, NW, SE, SW
         //North
-        if (map.tempValueAt(startX, startY + 1) != currentValue) {
+        if (map.heightAt(startX, startY + 1) != currentValue) {
             return isSurrounded;
         }
         //South
-        else if (map.tempValueAt(startX, startY - 1) != currentValue) {
+        else if (map.heightAt(startX, startY - 1) != currentValue) {
             return isSurrounded;
         }
         //East 
-        else if (map.tempValueAt(startX + 1, startY) != currentValue) {
+        else if (map.heightAt(startX + 1, startY) != currentValue) {
             return isSurrounded;
         }
         //West
-        else if (map.tempValueAt(startX - 1, startY) != currentValue) {
+        else if (map.heightAt(startX - 1, startY) != currentValue) {
             return isSurrounded;
         }
         //Northeast
-        else if (map.tempValueAt(startX + 1, startY + 1) != currentValue) {
+        else if (map.heightAt(startX + 1, startY + 1) != currentValue) {
             return isSurrounded;
         }
         //Northwest
-        else if (map.tempValueAt(startX + 1, startY - 1) != currentValue) {
+        else if (map.heightAt(startX + 1, startY - 1) != currentValue) {
             return isSurrounded;
         }
         //Southeast
-        else if (map.tempValueAt(startX - 1, startY + 1) != currentValue) {
+        else if (map.heightAt(startX - 1, startY + 1) != currentValue) {
             return isSurrounded;
         }
         //Southwest

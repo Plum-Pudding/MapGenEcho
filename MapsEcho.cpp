@@ -16,7 +16,7 @@
 
 int main() {
     Map testMap(DEFAULT_MAPSIZE_X, DEFAULT_MAPSIZE_Y);
-    Gen::fillBlanketGridMap(testMap, 2);
+    Gen::fillBlanketGridMap(testMap, 0);
     /*
     std::array<uint64_t, 100> testArr;
     Splitmix64 random;
@@ -28,7 +28,9 @@ int main() {
     }
     */
 
-    Gen::mapSnake8Directions(testMap, 16, 16, 4, 1);
+    //Gen::mapSnake8Directions(testMap, 16, 16, 16, 1, 0);
+
+    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 1024, 1, 0);
 
     Gen::saveGridMap(testMap);
 
