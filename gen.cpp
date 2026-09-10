@@ -394,21 +394,21 @@ namespace Gen {
             }
             */
             
-            if (nextX < 0 || nextY < 0 || nextX > mapMaxX || nextY > mapMaxY) { //Max 4 clock cycles(?)
-                if (nextX < 0) { //+1 cycle
+            if (nextX < 0 || nextY < 0 || nextX > mapMaxX || nextY > mapMaxY) { //Max 4, min 1 clock cycles(?)
+                if (nextX < 0) { //Max 2, min 1 cycles
                     nextX++; //+1 cycle
                 }
-                else if (nextX > mapMaxX) { //+1 cycle
+                else if (nextX > mapMaxX) { 
                     nextX--; //+1 cycle
                 }
-                if (nextY < 0) { //+1 cycle
+                if (nextY < 0) { //Max 2, min 1 cycles
                     nextY++; //+1 cycle
                 }
-                else if (nextY > mapMaxY) { //+1 cycle
+                else if (nextY > mapMaxY) { 
                     nextY--; //+1 cycle
                 }
                 i++; //+1 cycle
-                continue; //? cycles
+                continue; //x cycles
             }
             
 
