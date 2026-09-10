@@ -250,8 +250,10 @@ namespace Gen {
         auto startTime = std::chrono::high_resolution_clock::now();
         //Does a snake game thing idk along 8 directions, maybe we can use this to draw plate borders
 
-        int32_t mapSizeX = map.getSizeX();
-        int32_t mapSizeY = map.getSizeY();
+        bool issueFlag = false;
+
+        int32_t mapMaxX = map.getSizeX() - 1;
+        int32_t mapMaxY = map.getSizeY() - 1;
 
         //So it actually does n number of steps
         stepCount++;
@@ -259,13 +261,11 @@ namespace Gen {
         //Set up quick rng
         Splitmix64 random(seed);
 
-        int32_t currentX = startX;
-        int32_t currentY = startY;
         int32_t nextX = startX;
         int32_t nextY = startY;
 
         //Add to the starting cell
-        map.heightAt(currentX, currentY) = map.heightAt(currentX, currentY) + targetAddChange;
+        map.heightAt(nextX, nextY) = map.heightAt(nextX, nextY) + targetAddChange;
 
         //Main loop
         for (int i = stepCount; i > 0; i--) {
@@ -274,42 +274,51 @@ namespace Gen {
             switch (rand_num) {
             case 0:
                 //N
+                //std::cout << nextX << ',' << nextY << ":N\n";
                 nextY++;
                 break;
             case 1:
                 //S
+                //std::cout << nextX << ',' << nextY << ":S\n";
                 nextY--;
                 break;
             case 2:
                 //E
+                //std::cout << nextX << ',' << nextY << ":E\n";
                 nextX++;
                 break;
             case 3:
                 //W
+                //std::cout << nextX << ',' << nextY << ":W\n";
                 nextX--;
                 break;
             case 4:
                 //NE
+                //std::cout << nextX << ',' << nextY << ":NE\n";
                 nextY++;
                 nextX++;
                 break;
             case 5:
                 //NW
+                //std::cout << nextX << ',' << nextY << ":NW\n";
                 nextY++;
                 nextX--;
                 break;
             case 6:
                 //SE
+                //std::cout << nextX << ',' << nextY << ":SE\n";
                 nextY--;
                 nextX++;
                 break;
             case 7:
                 //SW
+                //std::cout << nextX << ',' << nextY << ":SW\n";
                 nextY--;
                 nextX--;
                 break;
             default:
                 //Default to north
+                //std::cout << nextX << ',' << nextY << ":Def N\n";
                 nextY++;
                 break;
             }
@@ -318,29 +327,90 @@ namespace Gen {
             //if out of bounds, rerun the random direction
             //todo: How to make sure we aren't adding extra steps if both X and Y are out of bounds
             //todo: Check the performance cost of adding another layer of if checks
-            if (nextX < 0 || nextY < 0 || nextX > mapSizeX || nextY > mapSizeY) { //Max 4 clock cycles(?)
+
+            /*
+            if (nextX < 0 || nextY < 0 || nextX > mapMaxX || nextY > mapMaxY) { //Max 4 clock cycles(?)
+                if (nextX < 0 || nextX > mapMaxX) { //Max 2 clock cycles
+                    if (nextX < 0) { //+1 cycle
+                        nextX++; //+1 cycle
+                    }
+                    else {
+                        nextY--; //+1 cycle
+                    }
+                }
+                if (nextY < 0 || nextY > mapMaxY) { //Max 2 clock cycles
+                    if (nextY < 0) { //+1 cycle
+                        nextY++; //+1 cycle
+                    }
+                    else {
+                        nextY--; //+1 cycle
+                    }
+                i++; //+1 cycle
+                continue; //? cycles
+                }
+            */
+
+            /*
+            if (nextX < 0) { //Max 2, min 1 cycles
+                nextX++; //+1 cycle
+                issueFlag = true; //+1 cycle
+            }
+            else if (nextX > mapMaxX) {
+                nextX--; //+1 cycle
+                issueFlag = true; //+1 cycle
+            }
+            if (nextY < 0) { //Max 2, min 1 cycles
+                nextY++; //+1 cycle
+                issueFlag = true; //+1 cycle
+            }
+            else if (nextY > mapMaxY) { //+1 cycle
+                nextY--; //+1 cycle
+                issueFlag = true; //+1 cycle
+            }
+
+            if (issueFlag == true) {//+1 cycle
+                i++; //+1 cycle
+                issueFlag = false; //+1 cycle
+                continue; //? cycles
+            }
+            */
+
+            /*
+            if (nextX < 0 || nextY < 0 || nextX > mapMaxX || nextY > mapMaxY) { //Max 4 clock cycles(?)
                 if (nextX < 0) { //+1 cycle
                     nextX++; //+1 cycle
                 }
                 if (nextY < 0) { //+1 cycle
                     nextY++; //+1 cycle
                 }
-                if (nextX > mapSizeX) { //+1 cycle
+                if (nextX > mapMaxX) { //+1 cycle
                     nextX--; //+1 cycle
                 }
-                if (nextY > mapSizeY) { //+1 cycle
+                if (nextY > mapMaxY) { //+1 cycle
+                    nextY--; //+1 cycle
+                }
+                i++; //+1 cycle
+                continue; //? cycles
+            }
+            */
+            
+            if (nextX < 0 || nextY < 0 || nextX > mapMaxX || nextY > mapMaxY) { //Max 4 clock cycles(?)
+                if (nextX < 0) { //+1 cycle
+                    nextX++; //+1 cycle
+                }
+                else if (nextX > mapMaxX) { //+1 cycle
+                    nextX--; //+1 cycle
+                }
+                if (nextY < 0) { //+1 cycle
+                    nextY++; //+1 cycle
+                }
+                else if (nextY > mapMaxY) { //+1 cycle
                     nextY--; //+1 cycle
                 }
                 i++; //+1 cycle
                 continue; //? cycles
             }
             
-            /*
-            currentX = nextX;
-            currentY = nextY;
-
-            map.heightAt(currentX, currentY) = map.heightAt(currentX, currentY) + targetAddChange;
-            */
 
             map.heightAt(nextX, nextY) = map.heightAt(nextX, nextY) + targetAddChange;
 
