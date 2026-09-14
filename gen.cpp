@@ -1,4 +1,6 @@
 
+
+
 #include <iostream>
 #include <chrono>
 #include <fstream>
@@ -482,5 +484,33 @@ namespace Gen {
             isSurrounded = true;
             return isSurrounded;
         }
+    }
+
+    void generateVoronoiCells(Map& map, int32_t voronoiCellCount, int32_t cellsToMerge, uint64_t seed) {
+        //Generate point coordinates count equal to (voronoiCellCount + cells to merge) --establish a good approx number for nice looking shapes
+        //Generate voronoi with jc_voronoi lib 
+        //Get edges
+        //Draw edges on map temp layer with no aliasing
+        //Flood fill cells with a random value (colour)
+        //Join cellsToJoin count random adjacent cells and flood fill overwrite their numbers (to get more complex shapes)
+        
+    }
+
+    void generateVoronoiTecPlates() {
+        //To be run after generateVoronoiCells()
+        //Assign a random direction bearing 0-359 to each unique 'colour' compound cell
+        //Assign a random direction velocity 0-255 to each unique 'colour' compound cell
+        //Assign a random density 0-255
+    }
+
+    void generateTecPlateHeightMap() {
+        //To be run after TecPlates layers are generated
+        //Compare neighbour cells (check o complexity of this) bearing, velocity and density to establish outcome heightmap
+        
+    }
+
+    void generateTecPlatesGeology() {
+        //To be run after heightmaps
+        //Compare neighbour cells to generate geology (and other feature flags)
     }
 }

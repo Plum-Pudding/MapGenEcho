@@ -22,29 +22,6 @@ int main() {
     Gen::fillBlanketGridMap(testMap, 0);
     Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
 
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
-
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
-
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
-
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
-
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
-
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
-
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
-
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
     
     Gen::saveGridMap(testMap);
 
