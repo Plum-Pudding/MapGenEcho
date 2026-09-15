@@ -10,6 +10,8 @@ namespace Gen {
 
 	void generateMap(Map& map);
 
+	void drawAliasedLine(Map& map, double point1_x, double point1_y, double point2_x, double point2_y);
+
 	void mapSnake4Directions(Map& map, int32_t startX = 0, int32_t startY = 0, int32_t stepCount = 1, int16_t targetChange = 1, uint64_t seed = 0);
 
 	void mapSnake8Directions(Map& map, int32_t startX = 0, int32_t startY = 0, int32_t stepCount = 1, int16_t targetChange = 1, uint64_t seed = 0);

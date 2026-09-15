@@ -92,6 +92,34 @@ namespace Gen {
 
     }
 
+    void drawAliasedLine(Map& map, double point1_x, double point1_y, double point2_x, double point2_y) {
+        //double mapAspectRatio = static_cast<double>(map.getSizeX() / map.getSizeY());
+
+        int32_t maxX = map.getSizeX();
+        int32_t maxY = map.getSizeY();
+        double aspectRatio = map.getAspectRatio();
+
+        double stepLen_x = 1.0 / maxX; //These should be almost identical but probably will be some floating point error difference 
+        double stepLen_y = (1.0 * aspectRatio) / maxY;
+
+        //stretching the points to account for non-square map sizes, then getting the coordinates based on map grid size
+        double absPoint1_x = point1_x * aspectRatio * stepLen_x;
+        double absPoint1_y = point1_y * stepLen_y;
+        double absPoint2_x = point2_x * aspectRatio * stepLen_x;
+        double absPoint2_y = point2_y * stepLen_y;
+
+        double span_x = absPoint2_x - absPoint1_x;
+        double span_y = absPoint2_y - absPoint1_y;
+        double gradient = span_y / span_x; 
+
+        //todo: cont here 
+        //need to find the Y range for startx to closest integer, then loop through integers, then get the final range between integer and endx
+        for (int32_t x = static_cast<int32_t>(absPoint1_x) + ; x < static_cast<int32_t>(absPoint2_x); x++) {
+
+        }
+        
+    }
+
     void mapSnake4Directions(Map& map, int32_t startX, int32_t startY, int32_t stepCount, int16_t targetChange, uint64_t seed) {
         //Does a snake game thing idk along 4 directions, maybe we can use this to draw plate borders
 
@@ -494,9 +522,6 @@ namespace Gen {
         //Generate point coordinates count equal to (voronoiCellCount + cells to merge) --establish a good approx number for nice looking shapes
         //Generate voronoi with jc_voronoi lib 
         //Get edges
-        //Draw edges on map cells temp layer with no aliasing using a random value
-        //Flood fill cells with a value from an edge (colour)
-        //Join cellsToJoin count random adjacent cells and flood fill overwrite their numbers (to get more complex shapes)
         Splitmix64 rng(seed);
 
         const bool drawPreview = false;
@@ -563,14 +588,31 @@ namespace Gen {
     
         sites = jcv_diagram_get_sites(&diagram);
 
-        //Retrieve the edges from sites
+        //Retrieve the edges from sites and draw them
+        uint16_t randPlateNum;
+
         for (int i = 0; i < diagram.numsites; i++) {
             jcv_site_get_edges(&diagram, &sites[i], &edge_iter);
             while (jcv_edge_next(&edge_iter, &graph_edge)) {
-                std::cout << "Edge: [" << graph_edge.pos[0].x << ", " << graph_edge.pos[0].y << "] to [" 
-                    << graph_edge.pos[1].x << ", " << graph_edge.pos[1].y << "]\n";
+                std::cout << "Edge: [" << graph_edge.pos[0].x << ", " << graph_edge.pos[0].y << "] to [" << graph_edge.pos[1].x << ", " << graph_edge.pos[1].y << "]\n";
+                //draw line algorithm
+                double gradient = (graph_edge.pos[0].y - graph_edge.pos[1].y) / (graph_edge.pos[0].x - graph_edge.pos[1].x);
+                int32_t span_x = static_cast<int32_t>(graph_edge.pos[0].x - graph_edge.pos[1].x); //We might lose some data here, watch for gaps
+                int32_t span_y = static_cast<int32_t>(graph_edge.pos[0].y - graph_edge.pos[1].y);
+
+                for (int x = 0; x < span_x; x++) {
+
+                }
+
             }
         }
+        
+        //Draw edges on map cells temp layer with no aliasing using a random value
+        
+
+
+        //Flood fill cells with a value from an edge (colour)
+        //Join cellsToJoin count random adjacent cells and flood fill overwrite their numbers (to get more complex shapes)
     }
 
     void generateVoronoiTecPlates(Map& map, uint64_t seed) {

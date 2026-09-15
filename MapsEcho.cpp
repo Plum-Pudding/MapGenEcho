@@ -17,12 +17,8 @@
 int main() {
     Map testMap(DEFAULT_MAPSIZE_X, DEFAULT_MAPSIZE_Y);
     Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
 
-    Gen::fillBlanketGridMap(testMap, 0);
-    Gen::mapSnake8DirectionsAdditive(testMap, 16, 16, 100000, 1, 0);
-
-    Gen::generateVoronoiCells(testMap, 3);
+    //Gen::generateVoronoiCells(testMap, 2);
 
     Gen::saveGridMap(testMap);
 
