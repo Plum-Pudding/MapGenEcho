@@ -147,8 +147,10 @@
     <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="jc_voronoi.h" />
     <ClInclude Include="map.h" />
     <ClInclude Include="gen.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SplitMix64.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

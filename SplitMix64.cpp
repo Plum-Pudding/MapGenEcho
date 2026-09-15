@@ -18,7 +18,10 @@ uint64_t Splitmix64::next_int() {
 	return z ^ (z >> 31);
 }
 
-double Splitmix64::next_float() {
+double Splitmix64::next_double() {
 	return next_int() / twoPower64;
 }
 
+double Splitmix64::next_double_factor() {
+	return ((next_int() >> 11) * 0x1.0p-53);
+}

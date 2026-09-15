@@ -1,13 +1,15 @@
-
-
+#define JC_VORONOI_IMPLEMENTATION
 
 #include <iostream>
 #include <chrono>
 #include <fstream>
+#include <vector>
+#include <array>
 
 #include "gen.h"
 #include "map.h"
 #include "SplitMix64.h"
+#include "jc_voronoi.h"
 
 namespace Gen {
     void fillBlanketGridMap(Map& map, int16_t target) {
@@ -127,7 +129,7 @@ namespace Gen {
                     //W
                     nextX--;
                     break;
-                default: 
+                default:
                     //default to north
                     nextY++;
                     break;
@@ -395,24 +397,24 @@ namespace Gen {
                 continue; //? cycles
             }
             */
-            
+
             if (nextX < 0 || nextY < 0 || nextX > mapMaxX || nextY > mapMaxY) { //Max 4, min 1 clock cycles(?)
                 if (nextX < 0) { //Max 2, min 1 cycles
                     nextX++; //+1 cycle
                 }
-                else if (nextX > mapMaxX) { 
+                else if (nextX > mapMaxX) {
                     nextX--; //+1 cycle
                 }
                 if (nextY < 0) { //Max 2, min 1 cycles
                     nextY++; //+1 cycle
                 }
-                else if (nextY > mapMaxY) { 
+                else if (nextY > mapMaxY) {
                     nextY--; //+1 cycle
                 }
                 i++; //+1 cycle
                 continue; //x cycles
             }
-            
+
 
             map.heightAt(nextX, nextY) = map.heightAt(nextX, nextY) + targetAddChange;
 
@@ -486,31 +488,115 @@ namespace Gen {
         }
     }
 
+    //Voronoi workflow
+
     void generateVoronoiCells(Map& map, int32_t voronoiCellCount, int32_t cellsToMerge, uint64_t seed) {
         //Generate point coordinates count equal to (voronoiCellCount + cells to merge) --establish a good approx number for nice looking shapes
         //Generate voronoi with jc_voronoi lib 
         //Get edges
-        //Draw edges on map temp layer with no aliasing
-        //Flood fill cells with a random value (colour)
+        //Draw edges on map cells temp layer with no aliasing using a random value
+        //Flood fill cells with a value from an edge (colour)
         //Join cellsToJoin count random adjacent cells and flood fill overwrite their numbers (to get more complex shapes)
-        
+        Splitmix64 rng(seed);
+
+        const bool drawPreview = false;
+
+        const int32_t numCellsToGen = voronoiCellCount + cellsToMerge;
+        float mapAspectRatio = (float)map.getAspectRatio();
+        float rand_x;
+        float rand_y;
+
+        //jcv setup
+        jcv_rect boundingBox = { {0.0f, 0.0f}, {mapAspectRatio, mapAspectRatio} };
+        jcv_diagram diagram;
+        std::vector<jcv_point> points;
+        const jcv_site* sites;
+        jcv_edge_iter edge_iter;
+        jcv_edge graph_edge;
+
+        //std::fill(&diagram, sizeof(jcv_diagram), 0);
+        memset(&diagram, 0, sizeof(jcv_diagram));
+
+        //generate random points
+        points.reserve(numCellsToGen);
+        for (int i = 0; i < numCellsToGen; i++) {
+            jcv_point tempPoint;
+
+            rand_x = static_cast<float>(rng.next_double_factor()) * mapAspectRatio;
+            rand_y = static_cast<float>(rng.next_double_factor());
+            
+            tempPoint.x = rand_x;
+            tempPoint.y = rand_y;
+
+            points.push_back(tempPoint);
+            std::cout << "RNG Point at [" << rand_x << "," << rand_y << "]\n";
+        }
+
+        //draw points (debug)
+        if (drawPreview) {
+            const int dispCols = 16;
+            const int dispRows = 8; //why tf is this shit flipped todo: fix this
+            int tempX, tempY;
+            std::array<std::array<char, dispRows>, dispCols> thingView{}; //x, y
+
+            for (int y = 0; y < dispRows; y++) {
+                for (int x = 0; x < dispCols; x++) {
+                    thingView[x][y] = '.';
+                }
+            }
+            for (int i = 0; i < numCellsToGen; i++) {
+                //Put an 'x' for each generated point
+                tempX = static_cast<int>((points[i].x / mapAspectRatio) * dispCols);
+                tempY = static_cast<int>(points[i].y * dispRows);
+                thingView[tempX][tempY] = 'X';
+            }
+
+            for (int y = 0; y < dispRows; y++) {
+                for (int x = 0; x < dispCols; x++) {
+                    std::cout << thingView[x][y];
+                }
+                std::cout << "\n";
+            }
+        }
+
+        jcv_diagram_generate(numCellsToGen, points.data(), &boundingBox, 0, &diagram);
+    
+        sites = jcv_diagram_get_sites(&diagram);
+
+        //Retrieve the edges from sites
+        for (int i = 0; i < diagram.numsites; i++) {
+            jcv_site_get_edges(&diagram, &sites[i], &edge_iter);
+            while (jcv_edge_next(&edge_iter, &graph_edge)) {
+                std::cout << "Edge: [" << graph_edge.pos[0].x << ", " << graph_edge.pos[0].y << "] to [" 
+                    << graph_edge.pos[1].x << ", " << graph_edge.pos[1].y << "]\n";
+            }
+        }
     }
 
-    void generateVoronoiTecPlates() {
+    void generateVoronoiTecPlates(Map& map, uint64_t seed) {
         //To be run after generateVoronoiCells()
         //Assign a random direction bearing 0-359 to each unique 'colour' compound cell
         //Assign a random direction velocity 0-255 to each unique 'colour' compound cell
         //Assign a random density 0-255
     }
 
-    void generateTecPlateHeightMap() {
+    void generateTecPlateHeightMap(Map& map, uint64_t seed) {
         //To be run after TecPlates layers are generated
         //Compare neighbour cells (check o complexity of this) bearing, velocity and density to establish outcome heightmap
-        
+        //Divergent boundaries-- minimal height diff, volcanic island drift
+        //Transverse-- small gorges, minimal topological effect
+        //Convergent subductive (if large enough density diff)-- Mountains + trench
+        //Convergent non-subductive (if similar density)-- Huge mountain ranges
+
     }
 
-    void generateTecPlatesGeology() {
+    void generateTecPlatesGeology(Map& map, uint64_t seed) {
         //To be run after heightmaps
         //Compare neighbour cells to generate geology (and other feature flags)
+        std::cout << "Nothing";
+    }
+
+    void generateTecPlates() {
+
     }
 }

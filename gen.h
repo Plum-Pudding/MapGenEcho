@@ -19,4 +19,13 @@ namespace Gen {
 	char8_t checkIfSurrounded4D(Map& map, int32_t startX, int32_t startY);
 
 	char8_t checkIfSurrounded8D(Map& map, int32_t startX, int32_t startY);
+
+	//Voronoi workflow
+	void generateVoronoiCells(Map& map, int32_t voronoiCellCount, int32_t cellsToMerge = 0, uint64_t seed = 0);
+
+	void generateVoronoiTecPlates(Map& map, uint64_t seed = 0);
+
+	void generateTecPlateHeightMap(Map& map, uint64_t seed = 0);
+
+	void generateTecPlatesGeology(Map& map, uint64_t seed = 0);
 }

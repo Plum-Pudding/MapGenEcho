@@ -10,5 +10,6 @@ public:
 
 	void seed(const uint64_t seed);
 	uint64_t next_int();
-	double next_float();
+	double next_double();
+	double next_double_factor(); //returns a double betwen 0 and 1
 };
