@@ -26,10 +26,11 @@ namespace Gen {
         std::cout << "Blanket fill grid execution time: " << fillGridMap_duration << "\n";
     }
 
-    void printGridMap(const Map& map) {
+    void printGridMapHeight(const Map& map) {
         auto printGridMap_Start = std::chrono::high_resolution_clock::now();
-        for (int x = 0; x < map.getSizeX(); x++) {
-            for (int y = 0; y < map.getSizeY(); y++) {
+        
+        for (int y = 0; y < map.getSizeY(); y++) {
+            for (int x = 0; x < map.getSizeX(); x++) {
                 std::cout << map.heightAt(x, y);
             }
             std::cout << "\n";
@@ -41,20 +42,57 @@ namespace Gen {
 
     }
 
+    void printGridMapPlateNum(const Map& map) {
+        auto printGridMap_Start = std::chrono::high_resolution_clock::now();
+       
+        for (int y = 0; y < map.getSizeY(); y++) {
+            for (int x = 0; x < map.getSizeX(); x++) {
+                std::cout << map.plateNumAt(x, y) << " ";
+            }
+            std::cout << "\n";
+        }
+    
+        auto printGridMap_End = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> printGridMap_duration = printGridMap_End - printGridMap_Start;
+        std::cout << "Print grid execution time: " << printGridMap_duration << "\n";
+
+    }
+
     //Uncompressed write as a .csv
-    void saveGridMap(const Map& map) {
+    void saveGridMapHeight(const Map& map) {
         auto saveGridMap_start = std::chrono::high_resolution_clock::now();
         std::ofstream resultFile;
         resultFile.open("map.csv");
 
-        for (int x = 0; x < map.getSizeX(); x++) {
-            for (int y = 0; y < map.getSizeY(); y++) {
+
+        for (int y = 0; y < map.getSizeY(); y++) {
+            for (int x = 0; x < map.getSizeX(); x++) {
                 resultFile << map.heightAt(x, y) << ',';
             }
             resultFile << "\n";
         }
         resultFile << ";";
 
+
+        auto saveGridMap_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> saveGridMap_duration = saveGridMap_end - saveGridMap_start;
+        std::cout << "Wrote map to file in " << saveGridMap_duration << "\n";
+    }
+
+    void saveGridMapPlateNum(const Map& map) {
+        auto saveGridMap_start = std::chrono::high_resolution_clock::now();
+        std::ofstream resultFile;
+        resultFile.open("mapNum.csv");
+
+        
+        for (int y = 0; y < map.getSizeY(); y++) {
+            for (int x = 0; x < map.getSizeX(); x++) {
+                resultFile << map.plateNumAt(x, y) << ',';
+            }
+            resultFile << "\n";
+        }
+        
+        resultFile << ";";
 
         auto saveGridMap_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> saveGridMap_duration = saveGridMap_end - saveGridMap_start;
@@ -94,7 +132,90 @@ namespace Gen {
 
     }
 
+    void drawOrthogonalLine2(Map& map, int32_t targetVal, double point1_x, double point1_y, double point2_x, double point2_y) {
+        auto startTime = std::chrono::high_resolution_clock::now();
+        int32_t maxX = map.getSizeX();
+        int32_t maxY = map.getSizeY();
+
+        const double realPoint1_x = point1_x * static_cast<double>(maxX);
+        const double realPoint1_y = point1_y * static_cast<double>(maxY);
+        const double realPoint2_x = point2_x * static_cast<double>(maxX);
+        const double realPoint2_y = point2_y * static_cast<double>(maxY);
+
+        //find line equation y = mx + c
+        const double m = (realPoint2_y - realPoint1_y) / (realPoint2_x - realPoint1_x);
+        // c = -m(x) + y
+        const double c = (-1.0 * m * realPoint1_x) + realPoint1_y;
+        //Inverse line equation (can this be optimised?) x = (y-c)/m
+        const double mInv = (realPoint2_x - realPoint1_x) / (realPoint2_y - realPoint1_y);
+
+        //std::cout << "m=" << m << "\n";
+        //std::cout << "c=" << c << "\n";
+        //std::cout << "inv m=" << mInv << "\n";
+        
+        //every x intersection fills the corresponding east cell
+        double curY = (m * realPoint1_x) + c - m; //set start y
+        /*
+        for (int32_t x = static_cast<int32_t>(realPoint1_x); x < static_cast<int32_t>(realPoint2_x); x++) {
+            //get y value of intercept with x, cast to int then fill corresponding cell (y=mx+c)
+            int32_t y = static_cast<int32_t>((m * x) + c); //okay so this works but not the addition (Find out why it's further north than actual point)
+            map.plateNumAt(x, y) = targetVal;
+            
+            //curY = curY + m; //cheaper computation than multiplication ^ (might have compounding floating point error though)
+            //map.plateNumAt(x, static_cast<int32_t>(curY)) = targetVal;
+            
+        }*/
+        
+        for (double x = realPoint1_x; x < realPoint2_x; x = x + 1.0) {
+            //get y value of intercept with x, cast to int then fill corresponding cell (y=mx+c)
+            /*
+            double y = (m * x) + c; 
+            map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(y)) = targetVal;
+            //std::cout << " x=" << x << " y=" << y << "\n";
+            //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(y) << "\n";
+            */
+            
+            curY = curY + m; //cheaper computation than multiplication ^ (might accrue floating point error though)
+            map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(curY)) = targetVal;
+            //std::cout << " x=" << x << " y=" << curY << "\n";
+            //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(curY) << "\n";
+            
+        }
+
+
+        //every y intersection fills the corresponding south cell
+        double curX = ((realPoint1_y - c) / m) - mInv;
+        for (double y = realPoint1_y; y < realPoint2_y; y = y + 1.0) { 
+            //get x value of intercept with y, cast to int and the fill corresponding cell (x=(y-c)/m) todo: try to optimise this divison away 
+            
+            /*
+            double x = (y - c) / m;
+            map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(y)) = targetVal;
+            //std::cout << " x=" << x << " y=" << y << "\n";
+            //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(y) << "\n";
+            */
+
+            curX = curX + mInv; //cheaper computation than division ^ (might have compounding error though)
+            map.plateNumAt(static_cast<int32_t>(curX), static_cast<int32_t>(y)) = targetVal;
+            //std::cout << " x=" << curX << " y=" << y << "\n";
+            //std::cout << "cell: " << static_cast<int32_t>(curX) << " " << static_cast<int32_t>(y) << "\n";
+            
+        }
+
+        //origin cells are filled
+        map.plateNumAt(static_cast<int32_t>(realPoint1_x), static_cast<int32_t>(realPoint1_y)) = 1; //change back to targetVal after debug
+        map.plateNumAt(static_cast<int32_t>(realPoint2_x), static_cast<int32_t>(realPoint2_y)) = 1;
+
+        
+        auto endTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = endTime - startTime;
+
+        std::cout << "Drew line from [" << realPoint1_x << ", " << realPoint1_y << "] to [" << realPoint2_x << ", " << realPoint2_y << "]\n";
+        std::cout << "Executed in:" << duration << "\n";
+    }
+
     void drawOrthogonalLine(Map& map, double point1_x, double point1_y, double point2_x, double point2_y) {
+        /*
         //double mapAspectRatio = static_cast<double>(map.getSizeX() / map.getSizeY());
 
         int32_t maxX = map.getSizeX();
@@ -150,11 +271,16 @@ namespace Gen {
             map.plateNumAt(cellPoint2_x, cellPoint2_y + yRel) = TEMP_NUM;
         }
 
+        double startY = ;
+
         //loop through and fill out the y's for the displacement between (shiiiiit)
         for (int x = point1BorderGrid_x; x < (point1BorderGrid_x + borderDisplacement_x); x++) {
             //for each column
             //todo: figure out how to dow this per column
+            //calculate y start and stop for this column
             
+
+            //loop to fill out cells
             for (int y = point1BorderGrid_y; y < (); y++) {
 
             }
@@ -178,7 +304,7 @@ namespace Gen {
         //todo: cont here 
         //need to find the Y range for startx to closest integer, then loop through integers, then get the final range between integer and endx
         
-        
+        */
     }
 
     void mapSnake4Directions(Map& map, int32_t startX, int32_t startY, int32_t stepCount, int16_t targetChange, uint64_t seed) {

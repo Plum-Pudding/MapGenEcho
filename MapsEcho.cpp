@@ -8,8 +8,8 @@
 #include "util.h"
 #include "map.h"
 
-#define DEFAULT_MAPSIZE_X 32
-#define DEFAULT_MAPSIZE_Y 32
+#define DEFAULT_MAPSIZE_X 128
+#define DEFAULT_MAPSIZE_Y 128
 
 #define DEFAULT_RESOLUTION 100 //size of each map point in metres
 
@@ -19,8 +19,11 @@ int main() {
     Gen::fillBlanketGridMap(testMap, 0);
 
     //Gen::generateVoronoiCells(testMap, 2);
+    
+    Gen::drawOrthogonalLine2(testMap, 5, 0.12, 0.20, 0.82, 0.76);
 
-    Gen::saveGridMap(testMap);
+    Gen::saveGridMapHeight(testMap);
+    Gen::saveGridMapPlateNum(testMap);
 
     return 0;
 }
