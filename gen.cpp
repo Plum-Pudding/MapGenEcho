@@ -11,6 +11,8 @@
 #include "SplitMix64.h"
 #include "jc_voronoi.h"
 
+#define TEMP_NUM 6
+
 namespace Gen {
     void fillBlanketGridMap(Map& map, int16_t target) {
         auto fillGridMap_Start = std::chrono::high_resolution_clock::now();
@@ -92,31 +94,90 @@ namespace Gen {
 
     }
 
-    void drawAliasedLine(Map& map, double point1_x, double point1_y, double point2_x, double point2_y) {
+    void drawOrthogonalLine(Map& map, double point1_x, double point1_y, double point2_x, double point2_y) {
         //double mapAspectRatio = static_cast<double>(map.getSizeX() / map.getSizeY());
 
         int32_t maxX = map.getSizeX();
         int32_t maxY = map.getSizeY();
         double aspectRatio = map.getAspectRatio();
 
-        double stepLen_x = 1.0 / maxX; //These should be almost identical but probably will be some floating point error difference 
-        double stepLen_y = (1.0 * aspectRatio) / maxY;
+        //converting relative coords to absolute coords based on map size
+        double gridPoint1_x = point1_x * static_cast<double>(maxX);
+        double gridPoint1_y = point1_y * static_cast<double>(maxY);
+        double gridPoint2_x = point2_x * static_cast<double>(maxX);
+        double gridPoint2_y = point2_y * static_cast<double>(maxY);
 
-        //stretching the points to account for non-square map sizes, then getting the coordinates based on map grid size
-        double absPoint1_x = point1_x * aspectRatio * stepLen_x;
-        double absPoint1_y = point1_y * stepLen_y;
-        double absPoint2_x = point2_x * aspectRatio * stepLen_x;
-        double absPoint2_y = point2_y * stepLen_y;
+        double displacement_x = gridPoint2_x - gridPoint1_x;
+        double displacement_y = gridPoint2_y - gridPoint1_y;
+        double gradient = displacement_y / displacement_x; 
 
-        double span_x = absPoint2_x - absPoint1_x;
-        double span_y = absPoint2_y - absPoint1_y;
-        double gradient = span_y / span_x; 
+        int32_t cellPoint1_x = static_cast<int32_t>(gridPoint1_x);
+        int32_t cellPoint1_y = static_cast<int32_t>(gridPoint1_y);
+        int32_t cellPoint2_x = static_cast<int32_t>(gridPoint2_x);
+        int32_t cellPoint2_y = static_cast<int32_t>(gridPoint2_y);
+
+
+        //temp assuming dx>0 and dy>0 i.e. left to right, top to bottom
+
+
+        //calc displacement_x between x1 and closest int
+        int32_t point1BorderGrid_x = (cellPoint1_x + 1); //because it is on the right of point 1
+        double point1Remainder_x = static_cast<double>(point1BorderGrid_x) - gridPoint1_x;
+        int32_t point1BorderGrid_y = static_cast<int32_t>(point1Remainder_x * gradient);
+        
+        //calc displacement_x between x2 and closest int
+        int32_t point2BorderGrid_x = cellPoint2_x;
+        double point2Remainder_x = gridPoint2_x - static_cast<double>(point2BorderGrid_x);
+        int32_t point2BorderGrid_y = static_cast<int32_t>(point2Remainder_x * gradient);
+
+        //find the remaining ints between them
+        //find displacement_x between the two border points
+        int32_t borderDisplacement_x = std::round(displacement_x - (point1Remainder_x + point2Remainder_x)); //rounding to prevent 3.99 cast to 3 errors
+
+        //fill the y cells for the x1 remainder
+        //fill point's actual cell
+        map.plateNumAt(cellPoint1_x, cellPoint1_y) = TEMP_NUM; 
+        //then fill out remaining y's
+        for (int yRel = 0; yRel < std::abs(point1BorderGrid_y - cellPoint1_y); yRel++) {
+            map.plateNumAt(cellPoint1_x, cellPoint1_y + yRel) = TEMP_NUM;
+        }
+
+        //fill the y cells for the x2 remainder
+        //fill out actual cell
+        map.plateNumAt(cellPoint2_x, cellPoint2_y) = TEMP_NUM;
+        //then fill out remaining
+        for (int yRel = 0; yRel < std::abs(point2BorderGrid_y - cellPoint2_y); yRel++) {
+            map.plateNumAt(cellPoint2_x, cellPoint2_y + yRel) = TEMP_NUM;
+        }
+
+        //loop through and fill out the y's for the displacement between (shiiiiit)
+        for (int x = point1BorderGrid_x; x < (point1BorderGrid_x + borderDisplacement_x); x++) {
+            //for each column
+            //todo: figure out how to dow this per column
+            
+            for (int y = point1BorderGrid_y; y < (); y++) {
+
+            }
+        }
+
+
+
+
+
+        if (displacement_x > 0) { //go left to right
+            
+        }
+        else if (displacement_x < 0) { //go right to left
+
+        }
+        else { //displacement_x = 0 i.e. line is totally vertical 
+
+        }
+
 
         //todo: cont here 
         //need to find the Y range for startx to closest integer, then loop through integers, then get the final range between integer and endx
-        for (int32_t x = static_cast<int32_t>(absPoint1_x) + ; x < static_cast<int32_t>(absPoint2_x); x++) {
-
-        }
+        
         
     }
 
