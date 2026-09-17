@@ -11,6 +11,8 @@
 #include "SplitMix64.h"
 #include "jc_voronoi.h"
 
+#include "raylib-cpp\raylib.hpp"
+
 #define TEMP_NUM 6
 
 namespace Gen {
