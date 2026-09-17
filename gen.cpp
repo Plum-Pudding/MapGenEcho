@@ -132,7 +132,7 @@ namespace Gen {
 
     }
 
-    void drawOrthogonalLine2(Map& map, int32_t targetVal, double point1_x, double point1_y, double point2_x, double point2_y) {
+    void drawOrthogonalLine(Map& map, int32_t targetVal, double point1_x, double point1_y, double point2_x, double point2_y) {
         auto startTime = std::chrono::high_resolution_clock::now();
         int32_t maxX = map.getSizeX();
         int32_t maxY = map.getSizeY();
@@ -144,11 +144,19 @@ namespace Gen {
         double realPoint2_x = point2_x * static_cast<double>(maxX);
         double realPoint2_y = point2_y * static_cast<double>(maxY);
 
+        
+
+        //origin cells are filled
+        map.plateNumAt(static_cast<int32_t>(realPoint1_x), static_cast<int32_t>(realPoint1_y)) = targetVal; //change back to targetVal after debug
+        map.plateNumAt(static_cast<int32_t>(realPoint2_x), static_cast<int32_t>(realPoint2_y)) = targetVal;
+        cellsChanged = cellsChanged + 2;
+
         //ok this works for north to south lines, but south to north is funky-- todo: fix this & check if current fix actually fixes this
         //North to south 
 
         //check if line is NW/SE or NE/SW
-        if ((realPoint1_x > realPoint2_x && realPoint1_y > realPoint2_y ) || (realPoint1_x < realPoint2_x && realPoint1_y < realPoint2_y)) {//NW/SE
+        if ((realPoint1_x >= realPoint2_x && realPoint1_y >= realPoint2_y ) || (realPoint1_x < realPoint2_x && realPoint1_y < realPoint2_y)) {//NW/SE
+            std::cout << "Line is NW or SE\n";
             if (realPoint1_x > realPoint2_x) { //NW: swap points to SE
                 double tempPoint_x = realPoint1_x;
                 double tempPoint_y = realPoint1_y;
@@ -158,11 +166,60 @@ namespace Gen {
 
                 realPoint1_y = realPoint2_y;
                 realPoint2_y = tempPoint_y;
+                std::cout << "Line is NW, swapped points around.\n";
             }
-            //procedure to fill cells west and north of intersections
+            //procedure to fill cells east and south of intersections
+            //find line equation y = mx + c
+            const double m = (realPoint2_y - realPoint1_y) / (realPoint2_x - realPoint1_x);
+            // c = -m(x) + y
+            const double c = (-1.0 * m * realPoint1_x) + realPoint1_y;
+            //Inverse line equation (can this be optimised?) x = (y-c)/m
+            const double mInv = (realPoint2_x - realPoint1_x) / (realPoint2_y - realPoint1_y);
 
+            double point1BorderDistance_x = (static_cast<int32_t>(realPoint1_x) + 1) - realPoint1_x; //Distance from point 1x to east x intercept
+            double point2BorderDistance_x = realPoint2_x - static_cast<int32_t>(realPoint2_x);
+            double point1BorderDistance_y = (static_cast<int32_t>(realPoint1_y) + 1) - realPoint1_y; //Distance from point 1y to south y intercept
+            double point2BorderDistance_y = realPoint2_y - static_cast<int32_t>(realPoint2_y);
+
+            double curY = (m * realPoint1_x) + c - m; //set start y for checks
+            double curX = ((realPoint1_y - c) / m) - mInv; //set start X for checks
+
+            for (double x = (realPoint1_x + 1.0 - point1BorderDistance_x); x < realPoint2_x; x = x + 1.0) {
+                //get y value of intercept with x, cast to int then fill corresponding cell (y=mx+c)
+                /*
+                double y = (m * x) + c;
+                map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(y)) = targetVal;
+                //std::cout << " x=" << x << " y=" << y << "\n";
+                //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(y) << "\n";
+                */
+
+                curY = curY + m; //cheaper computation than multiplication ^ (might accrue floating point error though)
+                map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(curY)) = targetVal;
+                //std::cout << " x=" << x << " y=" << curY << "\n";
+                //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(curY) << "\n";
+
+                cellsChanged++;
+            }
+            //every y intersection fills the corresponding south cell
+
+            for (double y = realPoint1_y + 1.0 - point1BorderDistance_y; y < realPoint2_y; y = y + 1.0) {
+                //get x value of intercept with y, cast to int and the fill corresponding cell (x=(y-c)/m) todo: try to optimise this divison away s
+                /*
+                double x = (y - c) / m;
+                map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(y)) = targetVal;
+                //std::cout << " x=" << x << " y=" << y << "\n";
+                //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(y) << "\n";
+                */
+
+                curX = curX + mInv; //cheaper computation than division ^ (might have compounding error though)
+                map.plateNumAt(static_cast<int32_t>(curX), static_cast<int32_t>(y)) = targetVal;
+                //std::cout << " x=" << curX << " y=" << y << "\n";
+                //std::cout << "cell: " << static_cast<int32_t>(curX) << " " << static_cast<int32_t>(y) << "\n";
+                cellsChanged++;
+            }
         }
         else if ((realPoint1_x < realPoint2_x && realPoint1_y > realPoint2_y) || (realPoint1_x > realPoint2_x && realPoint1_y < realPoint2_y)) {//NE/SW
+            std::cout << "Line is NE or SW\n";
             if (realPoint1_x > realPoint2_x) { //SW: swap points to NE
                 double tempPoint_x = realPoint1_x;
                 double tempPoint_y = realPoint1_y;
@@ -172,48 +229,50 @@ namespace Gen {
 
                 realPoint1_y = realPoint2_y;
                 realPoint2_y = tempPoint_y;
+                std::cout << "Line is SW, swapped points around.\n";
+                std::cout << "New points are [" << realPoint1_x << "," << realPoint1_y << "] [" << realPoint2_x << ", " << realPoint2_y << "]\n";
             }
-            //procedure to fill cells east and south of intersections
+            //find line equation y = mx + c
+            const double m = (realPoint2_y - realPoint1_y) / (realPoint2_x - realPoint1_x);
+            // c = -m(x) + y
+            const double c = (-1.0 * m * realPoint1_x) + realPoint1_y;
+            //Inverse line equation (can this be optimised?) x = (y-c)/m
+            const double mInv = (realPoint2_x - realPoint1_x) / (realPoint2_y - realPoint1_y);
 
+            double point1BorderDistance_x = (static_cast<int32_t>(realPoint1_x) + 1) - realPoint1_x; //Distance from point 1x to east x intercept
+            double point2BorderDistance_x = realPoint2_x - static_cast<int32_t>(realPoint2_x);
+            double point1BorderDistance_y = (static_cast<int32_t>(realPoint1_y) + 1) - realPoint1_y; //Distance from point 1y to south y intercept
+            double point2BorderDistance_y = realPoint2_y - static_cast<int32_t>(realPoint2_y);
+
+            double curY = (m * realPoint1_x) + c - m; //set start y for checks
+            double curX = ((realPoint1_y - c) / m) - mInv; //set start X for checks
+
+            //procedure to fill cells east and north of intersections
+            for (double x = (realPoint1_x + 1.0 - point1BorderDistance_x); x < realPoint2_x; x = x + 1.0) {
+                curY = curY + m; //cheaper computation than multiplication ^ (might accrue floating point error though)
+                map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(curY)) = targetVal;
+                //std::cout << " x=" << x << " y=" << curY << "\n";
+                //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(curY) << "\n";
+
+                cellsChanged++;
+            }
+            //every y intersection fills the corresponding south cell
+
+            for (double y = realPoint1_y + 1.0 - point1BorderDistance_y; y < realPoint2_y; y = y + 1.0) {
+                curX = curX + mInv; //cheaper computation than division ^ (might have compounding error though)
+                map.plateNumAt(static_cast<int32_t>(curX), static_cast<int32_t>(y) - 1) = targetVal;
+                //std::cout << " x=" << curX << " y=" << y << "\n";
+                //std::cout << "cell: " << static_cast<int32_t>(curX) << " " << static_cast<int32_t>(y) << "\n";
+                cellsChanged++;
+            }
+        }
+        else { //totally vertical or horizonal todo: check if we can get rid of this and use the two above cases
+            std::cout << "No line direction???\n";
         }
 
-        
-        if (realPoint1_x > realPoint2_x && realPoint1_y < realPoint2_y) { //southwest: 
-
-        }
-        if (realPoint1_x > realPoint2_x && realPoint1_y > realPoint2_y) { //northeast: flip points to southwest
-
-        }
-        
-        else { //totally vertical or horizonal
-
-        }
-
-
-        
-        if (realPoint1_x > realPoint2_x) {
-            
-        }
-
-        double point1BorderDistance_x = (static_cast<int32_t>(realPoint1_x) + 1) - realPoint1_x; //Distance from point 1x to right side x intercept
-        double point2BorderDistance_x = realPoint2_x - static_cast<int32_t>(realPoint2_x);
-        double point1BorderDistance_y = (static_cast<int32_t>(realPoint1_y) + 1) - realPoint1_y;
-        double point2BorderDistance_y = realPoint2_y - static_cast<int32_t>(realPoint2_y);
-
-        //find line equation y = mx + c
-        const double m = (realPoint2_y - realPoint1_y) / (realPoint2_x - realPoint1_x);
-        // c = -m(x) + y
-        const double c = (-1.0 * m * realPoint1_x) + realPoint1_y;
-        //Inverse line equation (can this be optimised?) x = (y-c)/m
-        const double mInv = (realPoint2_x - realPoint1_x) / (realPoint2_y - realPoint1_y);
-        
-        //origin cells are filled
-        map.plateNumAt(static_cast<int32_t>(realPoint1_x), static_cast<int32_t>(realPoint1_y)) = targetVal; //change back to targetVal after debug
-        map.plateNumAt(static_cast<int32_t>(realPoint2_x), static_cast<int32_t>(realPoint2_y)) = targetVal;
-        cellsChanged = cellsChanged + 2;
 
         //every x intersection fills the corresponding east cell
-        double curY = (m * realPoint1_x) + c - m; //set start y
+        
         /*
         for (int32_t x = static_cast<int32_t>(realPoint1_x); x < static_cast<int32_t>(realPoint2_x); x++) {
             //get y value of intercept with x, cast to int then fill corresponding cell (y=mx+c)
@@ -224,137 +283,12 @@ namespace Gen {
             //map.plateNumAt(x, static_cast<int32_t>(curY)) = targetVal;
             
         }*/
-        for (double x = (realPoint1_x + 1.0 - point1BorderDistance_x); x < realPoint2_x; x = x + 1.0) {
-            //get y value of intercept with x, cast to int then fill corresponding cell (y=mx+c)
-            /*
-            double y = (m * x) + c; 
-            map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(y)) = targetVal;
-            //std::cout << " x=" << x << " y=" << y << "\n";
-            //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(y) << "\n";
-            */
-            
-            curY = curY + m; //cheaper computation than multiplication ^ (might accrue floating point error though)
-            map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(curY)) = targetVal;
-            //std::cout << " x=" << x << " y=" << curY << "\n";
-            //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(curY) << "\n";
-
-            cellsChanged++;
-        }
-        //every y intersection fills the corresponding south cell
-        double curX = ((realPoint1_y - c) / m) - mInv;
-        for (double y = realPoint1_y + 1.0 - point1BorderDistance_y; y < realPoint2_y; y = y + 1.0) { 
-            //get x value of intercept with y, cast to int and the fill corresponding cell (x=(y-c)/m) todo: try to optimise this divison away s
-            /*
-            double x = (y - c) / m;
-            map.plateNumAt(static_cast<int32_t>(x), static_cast<int32_t>(y)) = targetVal;
-            //std::cout << " x=" << x << " y=" << y << "\n";
-            //std::cout << "cell: " << static_cast<int32_t>(x) << " " << static_cast<int32_t>(y) << "\n";
-            */
-
-            curX = curX + mInv; //cheaper computation than division ^ (might have compounding error though)
-            map.plateNumAt(static_cast<int32_t>(curX), static_cast<int32_t>(y)) = targetVal;
-            //std::cout << " x=" << curX << " y=" << y << "\n";
-            //std::cout << "cell: " << static_cast<int32_t>(curX) << " " << static_cast<int32_t>(y) << "\n";
-            cellsChanged++;
-        }
+        
         auto endTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> duration = endTime - startTime;
 
         std::cout << "Drew line from [" << realPoint1_x << ", " << realPoint1_y << "] to [" << realPoint2_x << ", " << realPoint2_y << "]\n";
         std::cout << "Drawn " << cellsChanged << "cells in:" << duration << "\n";
-    }
-
-    void drawOrthogonalLine(Map& map, double point1_x, double point1_y, double point2_x, double point2_y) {
-        /*
-        //double mapAspectRatio = static_cast<double>(map.getSizeX() / map.getSizeY());
-
-        int32_t maxX = map.getSizeX();
-        int32_t maxY = map.getSizeY();
-        double aspectRatio = map.getAspectRatio();
-
-        //converting relative coords to absolute coords based on map size
-        double gridPoint1_x = point1_x * static_cast<double>(maxX);
-        double gridPoint1_y = point1_y * static_cast<double>(maxY);
-        double gridPoint2_x = point2_x * static_cast<double>(maxX);
-        double gridPoint2_y = point2_y * static_cast<double>(maxY);
-
-        double displacement_x = gridPoint2_x - gridPoint1_x;
-        double displacement_y = gridPoint2_y - gridPoint1_y;
-        double gradient = displacement_y / displacement_x; 
-
-        int32_t cellPoint1_x = static_cast<int32_t>(gridPoint1_x);
-        int32_t cellPoint1_y = static_cast<int32_t>(gridPoint1_y);
-        int32_t cellPoint2_x = static_cast<int32_t>(gridPoint2_x);
-        int32_t cellPoint2_y = static_cast<int32_t>(gridPoint2_y);
-
-
-        //temp assuming dx>0 and dy>0 i.e. left to right, top to bottom
-
-
-        //calc displacement_x between x1 and closest int
-        int32_t point1BorderGrid_x = (cellPoint1_x + 1); //because it is on the right of point 1
-        double point1Remainder_x = static_cast<double>(point1BorderGrid_x) - gridPoint1_x;
-        int32_t point1BorderGrid_y = static_cast<int32_t>(point1Remainder_x * gradient);
-        
-        //calc displacement_x between x2 and closest int
-        int32_t point2BorderGrid_x = cellPoint2_x;
-        double point2Remainder_x = gridPoint2_x - static_cast<double>(point2BorderGrid_x);
-        int32_t point2BorderGrid_y = static_cast<int32_t>(point2Remainder_x * gradient);
-
-        //find the remaining ints between them
-        //find displacement_x between the two border points
-        int32_t borderDisplacement_x = std::round(displacement_x - (point1Remainder_x + point2Remainder_x)); //rounding to prevent 3.99 cast to 3 errors
-
-        //fill the y cells for the x1 remainder
-        //fill point's actual cell
-        map.plateNumAt(cellPoint1_x, cellPoint1_y) = TEMP_NUM; 
-        //then fill out remaining y's
-        for (int yRel = 0; yRel < std::abs(point1BorderGrid_y - cellPoint1_y); yRel++) {
-            map.plateNumAt(cellPoint1_x, cellPoint1_y + yRel) = TEMP_NUM;
-        }
-
-        //fill the y cells for the x2 remainder
-        //fill out actual cell
-        map.plateNumAt(cellPoint2_x, cellPoint2_y) = TEMP_NUM;
-        //then fill out remaining
-        for (int yRel = 0; yRel < std::abs(point2BorderGrid_y - cellPoint2_y); yRel++) {
-            map.plateNumAt(cellPoint2_x, cellPoint2_y + yRel) = TEMP_NUM;
-        }
-
-        double startY = ;
-
-        //loop through and fill out the y's for the displacement between (shiiiiit)
-        for (int x = point1BorderGrid_x; x < (point1BorderGrid_x + borderDisplacement_x); x++) {
-            //for each column
-            //todo: figure out how to dow this per column
-            //calculate y start and stop for this column
-            
-
-            //loop to fill out cells
-            for (int y = point1BorderGrid_y; y < (); y++) {
-
-            }
-        }
-
-
-
-
-
-        if (displacement_x > 0) { //go left to right
-            
-        }
-        else if (displacement_x < 0) { //go right to left
-
-        }
-        else { //displacement_x = 0 i.e. line is totally vertical 
-
-        }
-
-
-        //todo: cont here 
-        //need to find the Y range for startx to closest integer, then loop through integers, then get the final range between integer and endx
-        
-        */
     }
 
     void mapSnake4Directions(Map& map, int32_t startX, int32_t startY, int32_t stepCount, int16_t targetChange, uint64_t seed) {

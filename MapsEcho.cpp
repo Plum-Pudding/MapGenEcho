@@ -20,7 +20,9 @@ int main() {
 
     //Gen::generateVoronoiCells(testMap, 2);
     
-    Gen::drawOrthogonalLine2(testMap, 5, 0.1012, 0.8921, 0.7837, 0.2381);
+    //Gen::drawOrthogonalLine2(testMap, 5, 0.1012, 0.2412, 0.7837, 0.9281);
+    Gen::drawOrthogonalLine(testMap, 5, 0.9012, 0.1412, 0.1837, 0.9281);
+    //Gen::drawOrthogonalLine2(testMap, 5, 0.1012, 0.9412, 0.9837, 0.1281);
 
     Gen::saveGridMapHeight(testMap);
     Gen::saveGridMapPlateNum(testMap);
